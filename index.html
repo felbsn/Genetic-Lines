@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> p5js GenPlayGrounds</title>
+  <style>
+    body {
+      background: #007bff;
+      background: linear-gradient(to right, #0062E6, #33AEFF);
+
+      padding: 30px;
+      margin: 0px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #canvasContainer {
+      margin: 0px;
+      background: #65aed8;
+      background: linear-gradient(to right, rgb(175, 197, 226), rgb(187, 202, 212));
+      border-radius: 3px;
+
+
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="p5.min.js"></script>
+  <script src="p5.dom.min.js"></script>
+  <script src="p5.sound.min.js"></script>
+  <script src="algorithm.js"></script>
+  <script src="sketch.js"></script>
+</head>
+
+<body>
+
+
+  <ul class="list-group">
+
+
+    <li class="list-group-item">
+
+      <h3> Genetic Lines</h3>
+
+      <h4> fatih elbasan 2019 </h1>
+
+
+    </li>
+
+    <li class="list-group-item">
+
+      <table>
+
+        <tr valign="top">
+
+          <td>
+
+
+            <div id="canvasContainer"></div>
+
+
+          </td>
+
+
+          <td>
+
+
+            <table class="table">
+
+              <tbody>
+                <tr class="active">
+
+                  <td>
+
+                    <table class="table">
+                      <tbody>
+
+                        <tr class="active">
+                          <td>Frame Rate</td>
+                          <td><input id="frameRateSlider" type="range" min="1" max="200" value="24"
+                              oninput="frameRateValueText.innerHTML= value"></td>
+                          <td id="frameRateValueText"> 24 </td>
+                        </tr>
+
+                        <tr class="active">
+                          <td> Mutation Scale Factor </td>
+                          <td><input id="mutationScaleFactorSlider" type="range" min="0" max="100" value="20"
+                              oninput="mutationFactorValue.innerHTML=(value/100).toFixed(2)"></td>
+                          <td id="mutationFactorValue"> 0.2 </td>
+                        </tr>
+
+                        <tr class="active">
+                          <td>Mutation Count Factor</td>
+                          <td><input id="mutationCountSlider" type="range" min="0" max="100" value="3"
+                              oninput="console.log(this.parentNode.parentNode.children[2].innerHTML = value)"></td>
+                          <td> 3 </td>
+                        </tr>
+
+                        <tr class="active">
+                          <td>Population Count</td>
+                          <td><input id="populationCountslider" type="range" min="2" max="100" value="3"
+                              oninput="console.log(this.parentNode.parentNode.children[2].innerHTML = value)"></td>
+
+                          <td> 3 </td>
+                        </tr>
+
+                        <tr class="active">
+                          <td>Full Rand Count</td>
+                          <td><input id="frCountslider" type="range" min="0" max="50" value="2"
+                              oninput="console.log(this.parentNode.parentNode.children[2].innerHTML = value)"></td>
+
+                          <td> 2 </td>
+                        </tr>
+
+
+                        <tr class="active">
+
+                          <td>
+
+                            <button id="startButton" type="button" class="btn btn-primary"> Start</button>
+                            <button id="restartButton" type="button" class="btn btn-info"> Restart</button>
+                          </td>
+
+                          <td>
+
+                          </td>
+                          <td> </td>
+                        </tr>
+
+
+
+
+
+                      </tbody>
+
+
+                    </table>
+
+
+
+                  </td>
+
+                </tr>
+
+
+                <tr class="active" style="height:100%;">
+
+
+                  <td id="logElement"
+                    style="display: block; border: 1px solid green; height: 428px; overflow-y: scroll">
+
+
+                  </td>
+
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </td>
+
+        </tr>
+
+      </table>
+
+
+    </li>
+
+  </ul>
+
+
+</body>
+
+</html>
