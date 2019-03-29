@@ -16,13 +16,70 @@ var mcslider;
 var frslider;
 var pcslider;
 var randslider;
+var checkbox;
 
-
+var waitFinish = false;
 var running = false;
 var finished = true;
 
 var loggerElm;
 
+
+
+var xWidth = 600;
+var xHeight = 600;
+
+var xs = cWidth /100;
+
+var ys = cHeight/10;
+
+
+function curveFunc(c , mf)
+{
+  var sqt = Math.sqrt(c);
+  return sqt / (mf*(sqt -c ));
+}
+
+function drawFunc()
+{
+
+strokeWeight(5);
+
+ 
+stroke(0 , 0 , 0);
+point( 22*xs ,cHeight- 1*ys)
+stroke(255 , 30 , 30);
+point( 35*xs , cHeight- 4*ys)
+
+
+strokeWeight(3);
+
+
+var s = 100
+for (let index = 1; index < s; index++) {
+
+  var rat = index / s;
+
+
+  stroke(180 , 180 , 0);
+
+  point( index * xs , cHeight -5 );
+
+
+  stroke(180 , 50 ,180);
+
+
+  var val = curveFunc(index /s   ,mutationFactor  )*10
+
+  point( index * xs , cHeight -val  );
+
+  
+}
+
+
+//endShape()
+
+}
 
 
 
@@ -33,7 +90,7 @@ function draw() {
   background(220);
   checkValues();
 
-
+ // drawFunc()  
   if (!running) {
 
     frameRate(30)
@@ -46,7 +103,7 @@ function draw() {
 
     } else {
 
-      drawLines()
+      drawLinesSucces()
     }
 
     drawMatrix(mx);
@@ -54,8 +111,12 @@ function draw() {
   } else {
 
     frameRate(frameRateValue)
+
+
     train();
-    drawLines()
+
+
+ 
     drawMatrix(mx);
   }
 
@@ -105,17 +166,45 @@ function train() {
     succes += element.succes;
   }
 
+
+  
+  drawLines();
   if (alives == 0) {
 
     if (succes > 0) {
 
-      console.log("Some line Reach the target...")
-      finished = true;
-      $("#startButton").click();
-      started = false;
-      bestFit = getBestFit(xTarget, yTarget);
+ 
+      if(waitFinish)
+      {
+        //finished = true;
+       // started = false;
+        //$("#startButton").click();
+      //  htmlLog("succes gen : " + (generation + 1));
 
-      htmlLog("succes gen : " + (generation + 1));
+        drawLinesSucces()
+      }else{
+
+
+
+  
+
+
+        console.log("generating next batch...")
+
+        generation++;
+  
+  
+        htmlLog("generation: " + generation );
+       
+  
+        liners = generateNextGen();
+
+
+
+      }
+
+
+
 
     } else {
       console.log("generating next batch...")
@@ -123,38 +212,11 @@ function train() {
       generation++;
 
 
+      htmlLog("generation: " + generation );
+     
 
-
-      let best = getBestFit(xTarget, yTarget);
-
-      htmlLog("generation: " + generation + " best Dist:" + best.calculateDistance(xTarget, yTarget).toFixed(2));
-
-
-
-      liners = [];
-      if (best) {
-        liners.push(best.clone());
-
-        for (let i = 0; i < populateFactor - 1; i++) {
-          let lin = best.clone()
-          lin.mutate();
-          liners.push(lin);
-        }
-
-        for (let i = 0; i < fullRandomCount; i++) {
-
-          let lin = new Liner(100);
-
-          lin.setBegin(xBegin, yBegin);
-
-          liners.push(lin);
-        }
-
-
-
-
-      }
-
+      liners = generateNextGen();
+    
 
 
 
@@ -164,38 +226,41 @@ function train() {
   }
 }
 
-
-function getBestFit(x, y, tolerance = 1.0) {
-
-  let bestFit = liners[0];
-  let bestDist = liners[0].calculateDistance(x, y);
-  let ix = 0;
-  for (let i = 1; i < liners.length; i++) {
-    const elm = liners[i];
-    let dist = elm.calculateDistance(x, y);
-
-    console.log("distances: " + dist)
+function finishCurrent()
+{
 
 
-    if (dist < bestDist) {
-      bestFit = liners[i];
-      bestDist = dist;
-      ix = i;
-    } else {
-      if (dist - tolerance < bestDist && bestFit.traces.length > elm.traces.length) {
-        bestFit = liners[i];
-        bestDist = dist;
-        ix = i;
+}
 
-      }
 
-    }
+function generateNextGen() {
+
+  liners.sort(function(a, b){return (a.foundGoals.length == b.foundGoals.length ? a.traces.length - b.traces.length : b.foundGoals.length - a.foundGoals.length  )  });
+  
+
+  var nextGet = [];
+
+  
+  nextGet.push(liners[0].clone());
+
+  while(nextGet.length < populateFactor)
+  {
+    let rnd = Math.random();
+    let cl = liners[   Math.floor( rnd*rnd *liners.length  )].clone();
+    cl.mutate();
+    nextGet.push(cl);
+
+
 
   }
 
-  console.log("best One is : " + ix + " as " + bestDist)
+  for (let index = 0; index <  fullRandomCount; index++) {
+    nextGet.push( new Liner(50 ,  [ 255 * Math.random()   , 255 * Math.random() , 255 * Math.random()  ]) );
+    
+  }
 
-  return bestFit;
+
+  return nextGet;
 }
 
 
@@ -246,6 +311,20 @@ function drawLines() {
 
   }
 }
+function drawLinesSucces() {
+
+
+
+  for (let index = 0; index < liners.length; index++) {
+
+    const element = liners[index];
+    if(element.succes)
+      element.drawFull();
+      else
+      element.drawGhost();
+
+  }
+}
 
 function markSector(x, y, markAs = 1) {
   if (x >= 0 && y >= 0 && x < cWidth && y < cHeight) {
@@ -253,9 +332,17 @@ function markSector(x, y, markAs = 1) {
     var ox = int(x / widthScale);
     var oy = int(y / heightScale);
 
+    if (mx[ox][oy] == 2)
+    {
+      GOAL_COUNT--;
+    }
+
 
     if (markAs == 2) {
-      if (mx[xTarget][yTarget] == 2) mx[xTarget][yTarget] = 0;
+      //if (mx[xTarget][yTarget] == 2) mx[xTarget][yTarget] = 0;
+
+
+      GOAL_COUNT++;
 
       xTarget = ox;
       yTarget = oy;
@@ -283,6 +370,9 @@ function setup() {
       $("#startButton").addClass("btn-warning");
 
     } else {
+
+
+       drawLines();
 
       $("#startButton").html("Start");
       $("#startButton").addClass("btn-primary");
@@ -321,6 +411,7 @@ function setup() {
   pcslider = document.getElementById("populationCountslider");
   randslider = document.getElementById("frCountslider");
   loggerElm = document.getElementById("logElement");
+  checkbox =  document.getElementById("cmn-toggle-4");
 
   cnv = createCanvas(cWidth, cHeight);
 
@@ -343,6 +434,9 @@ function setup() {
 
 
 function checkValues() {
+
+
+  waitFinish = checkbox.checked;
   mutationLimit = float(mcslider.value);
   mutationFactor = float(mfslider.value) / 100;
   frameRateValue = int(frslider.value);

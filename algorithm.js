@@ -19,6 +19,8 @@ function clearMatrix()
 }
 
 
+
+
 var generation = 0;
 var bestFit = null;
 
@@ -32,6 +34,8 @@ var mutationLimit = 3;
 var frameRateValue = 1;
 var fullRandomCount = 2;
 
+var straightness = 0.95;
+
 
 var populateFactor = 3;
 var selectCount = 1;
@@ -39,7 +43,10 @@ var liners = [];
 
 
 var xBegin = 8 ;
-var yBegin = 14;
+var yBegin = 7;
+
+
+var GOAL_COUNT = 0;
 
 mx = matrix(matrixWidth, matrixHeight);
 
@@ -54,14 +61,33 @@ const LN_ST_BLOCKED = 3;
 const LN_ST_SUCCES = 4;
 const LN_ST_DEAD = 5;
 
+const MAX_ITERATIONS = 50;
 
 
 
-const LN_RIGHT = 0;
-const LN_UP_RIGHT = 1;
-const LN_UP =2;
-const LN_UP_LEFT = 3
-const LN_LEFT = 4;
+const LN_RIGHT = 1;
+const LN_LEFT = -1;
+
+const LN_UP_LEFT = -2
+const LN_DOWN_RIGHT = 2;
+
+const LN_DOWN_LEFT = -3;
+const LN_UP_RIGHT = 3;
+
+
+const LN_UP =  -4;
+const LN_DOWN = 4;
+
+const MOVES_COUNT = 4;
+
+
+function randomMove()
+{
+
+    let dir =   Math.random() < 0.5 ?  -1 : 1;
+
+    return    (Math.floor(  Math.random()*MOVES_COUNT   )+1) * dir;
+}
 
 
 
@@ -86,19 +112,22 @@ class Liner
         else
         this.color = [ 255 * Math.random()   , 255 * Math.random() , 255 * Math.random()  ];
 
+
+        this.foundGoals = [];
+
         this.moves = [];
         this.traces = [];
 
         this.alive = true;
         this.succes = false;
-        this.maxMoveCount = maxMoves;
-        this.currentMove = 0;
+        this.maxMoveCount = MAX_ITERATIONS;
+        this.currentMove =  0;
  
         this.x;
         this.y;
  
-        this.xBegin;
-        this.yBegin;
+        this.xBegin = xBegin;
+        this.yBegin = yBegin;
  
     }
 
@@ -129,6 +158,18 @@ class Liner
     }
 
 
+    checkGoal(x , y) {
+    
+        if(  this.foundGoals.find( ( a) => a.x == x && a.y == y ))
+            return false;
+        else
+        {
+            this.foundGoals.push( {x:x,y:y});
+            return true;
+        }
+    }
+
+
     drawFull()
     {
         if(this.traces.length >= 1)
@@ -136,7 +177,7 @@ class Liner
             strokeWeight(7)
 
             if(this.succes)
-            stroke(0,255 ,0  , 240);
+            stroke(0,255 ,0  , 255);
             else
             if(!this.alive)
             stroke(0,0 ,0  , 160);
@@ -163,6 +204,36 @@ class Liner
 
     }
 
+
+    drawGhost()
+    {
+        if(this.traces.length >= 1)
+        {
+            strokeWeight(7)
+            stroke(0,0 ,0  , 20);
+
+
+ 
+            noFill();
+            beginShape();
+            curveVertex( this.xBegin * widthScale + widthScale/2,  this.yBegin* heightScale + heightScale/2);
+            curveVertex( this.xBegin * widthScale + widthScale/2,  this.yBegin* heightScale + heightScale/2);
+    
+     
+            for (let index = 0; index < this.traces.length; index++) {
+                const element = this.traces[index];
+               curveVertex( element.x * widthScale + widthScale/2, element.y * heightScale + heightScale/2);
+            }
+            curveVertex( this.traces[this.traces.length-1].x * widthScale + widthScale/2, this.traces[this.traces.length-1].y * heightScale + heightScale/2);
+            endShape();
+
+        }
+
+
+
+    }
+
+
  
 
     calculateManhatten(xTarget , yTarget)
@@ -186,8 +257,8 @@ class Liner
 
     restart()
     {
-        this.currentMove = 0
-        this.lastMove = LN_UP;
+        //this.currentMove = -4
+        this.lastMove = 0;
 
         this.alive  = true ;
         this.succes = false;
@@ -209,7 +280,7 @@ class Liner
 
             let mIndex = Math.floor(Math.random() * (this.moves.length *(1.0- mutationFactor) )  +(this.moves.length * mutationFactor )  )
 
-            this.moves[mIndex] = this.RandomMovement(  mIndex > 0 ?  this.moves[mIndex-1] : LN_UP );
+            this.moves[mIndex] = this.RandomMovement(  mIndex > 0 ?  this.moves[mIndex-1] : 0 );
 
             this.color[0] = Math.floor(this.color[0]*0.85 +  (Math.random()* 255 ) *0.15);
             this.color[1] = Math.floor(this.color[1]*0.85 +  (Math.random()* 255 ) *0.15);
@@ -230,7 +301,21 @@ class Liner
                 move = this.moves[this.currentMove];     
             }else
             {
-                move = this.RandomMovement(this.currentMove > 0 ? this.moves[this.currentMove-1]: LN_UP );
+                if(this.currentMove > 0)
+                {
+                    move = randomMove();
+                }else{
+
+                    if(Math.random() < straightness)
+                    {
+                        move =  this.moves[this.currentMove-1] ; 
+                    }else
+                    {
+                        move = this.RandomMovement(this.moves[this.currentMove-1] );
+                    }
+                }
+
+               
                 this.moves.push(move);
 
             }
@@ -244,19 +329,29 @@ class Liner
                 this.traces.push({x:this.x , y:this.y , status:LN_ST_BLOCKED});
             }else
             {
-
                 if(mx[this.x][this.y] == 2)
                 {
  
-                  
-                    this.succes = true;
-                    this.alive = false;
+                   if(this.checkGoal(this.x , this.y  ))
+                   {
                     this.traces.push({x:this.x , y:this.y , status:LN_ST_SUCCES});
-           
+
+                    if(this.foundGoals.length ==  GOAL_COUNT)
+                    {
+                        this.succes = true;
+                        this.alive = false;
+                    }
+
+                   }else
+                   {
+                    this.traces.push({x:this.x , y:this.y , status:LN_ST_NORM});
+                   }
+                    
+                   // this.succes = true;
+                   // this.alive = false;
                 }else
                 this.traces.push({x:this.x , y:this.y , status:LN_ST_NORM});
             }
-
 
         }
     }
@@ -264,8 +359,8 @@ class Liner
  
     RandomMovement(lastM)
     {
-        var move =   Math.floor(Math.random() * 5) ;
-        if(Math.abs(lastM- move ) >= 4) 
+        var move =   randomMove() ;
+        if(Math.abs(lastM) ==  Math.abs( move )) 
         {
                 move = lastM;
         }
@@ -295,11 +390,19 @@ class Liner
             this.y--;
             this.x--;
             break;
-            case LN_UP:
-            this.y--;
+            case LN_DOWN_LEFT:
+            this.y++;
+            this.x--;
+            break;
+            case LN_DOWN_RIGHT:
+            this.y++;
+            this.x++;
+            break;
+            case LN_DOWN:
+            this.y++;
             break;
             default:
-            console.log("unimplemented things...")
+            console.log("unimplemented things... " +  move);
             break;
         }
     }
